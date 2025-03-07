@@ -1,6 +1,7 @@
 ﻿using IKEA.BLL.Models.Departments;
 using IKEA.BLL.Services;
 using IKEA.DAL.Models.Departments;
+using IKEA.PL.Models.Department;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IKEA.PL.Controllers
@@ -75,6 +76,90 @@ namespace IKEA.PL.Controllers
                     message = "Department is not created";
                     return View("Error", message);
                 }
+            }
+
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Details
+
+         [HttpGet]
+        public IActionResult Details(int? id)
+        {
+            if (id is null)
+                return BadRequest();
+            var department = _departmentService.GetDepartmentById(id.Value);
+            if (department is null)
+                return NotFound();
+            return View(department);
+        }
+
+
+        #endregion
+
+        #region Edit
+
+        #region Get
+
+        [HttpGet]
+        public IActionResult Edit(int? id)
+        {
+            if (id is null)
+                return BadRequest();
+            var department = _departmentService.GetDepartmentById(id.Value);
+            if (department is null)
+                return NotFound();
+            return View(new DepartmentEditViewModel
+            {
+                Code = department.Code,
+                Name = department.Name,
+                Description = department.Description,
+                CreationDate = department.CreationDate
+            });
+        }
+
+        #endregion
+
+        #region Post
+        [HttpPost]
+        public IActionResult Edit([FromRoute]int id, [FromBody]DepartmentEditViewModel departmentVM)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(departmentVM);
+            }
+
+            var message = string.Empty;
+            try
+            {
+                var updatedDepartment = new UpdatedDepartmentDTO()
+                {
+                    Id = id,
+                    Code = departmentVM.Code,
+                    Name = departmentVM.Name,
+                    Description = departmentVM.Description,
+                    CreationDate = departmentVM.CreationDate
+                };
+                var updated = _departmentService.UpdateDepartment(updatedDepartment)>0;
+                if (updated)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+              
+                    message = "Sorry, An Error Occured While Updating The Department ";
+                    ModelState.AddModelError(string.Empty, message);
+                    return View(departmentVM);
+               
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                message = _environment.IsDevelopment()? ex.Message : "Sorry, An Error Occured While Updating The Department ";
+                ModelState.AddModelError(string.Empty, message);
+                return View(departmentVM);
             }
 
         }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace IKEA.DAL.Presistance.Repositories.Departments
 {
-    public interface IDepartmentRepo
+    public interface IDepartmentRepository
     {
         IEnumerable<Department> GetAll(bool WithAsNoTracking = true);
         IQueryable<Department> GetAllAsQuarable();

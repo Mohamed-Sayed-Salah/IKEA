@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace IKEA.DAL.Presistance.Repositories.Departments
 {
-    public class DepartmentRepo : IDepartmentRepo
+    public class DepartmentRepository : IDepartmentRepository
     {
         private readonly ApplicationDbContext _dbContext;
 
-        public DepartmentRepo(ApplicationDbContext dbContext)
+        public DepartmentRepository(ApplicationDbContext dbContext)
         // Ask CLr for object from ApplicationDbContext implicitly
         {
             _dbContext = dbContext;

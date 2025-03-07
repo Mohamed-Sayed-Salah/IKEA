@@ -3,6 +3,7 @@ using IKEA.BLL.Services;
 using IKEA.DAL.Models.Departments;
 using IKEA.PL.Models.Department;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace IKEA.PL.Controllers
 {
@@ -149,7 +150,7 @@ namespace IKEA.PL.Controllers
                     return RedirectToAction(nameof(Index));
                 }
               
-                    message = "Sorry, An Error Occured While Updating The Department ";
+                    message = "Sorry, An Error Occured During Updating The Department";
                     ModelState.AddModelError(string.Empty, message);
                     return View(departmentVM);
                
@@ -161,6 +162,52 @@ namespace IKEA.PL.Controllers
                 ModelState.AddModelError(string.Empty, message);
                 return View(departmentVM);
             }
+
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Delete
+
+        #region Get
+        [HttpGet]
+        public IActionResult Delete(int? id)
+        {
+            if (id is null)
+                return BadRequest();
+            var department = _departmentService.GetDepartmentById(id.Value);
+            if (department is null)
+                return NotFound();
+            return View(department);
+        }
+
+
+        #endregion
+
+        #region Post
+
+        [HttpPost]
+        public IActionResult Delete(int id)
+        {
+            var massage = string.Empty;
+            try
+            {
+                var deleted = _departmentService.DeleteDepartment(id);
+                            if (deleted)
+                                 return RedirectToAction(nameof(Index));
+
+                            massage = "Sorry, An Error Occured During Deleting The Department";
+           
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                massage = _environment.IsDevelopment() ? ex.Message : "Sorry, An Error Occured During Deleting The Department";
+                
+            }
+            return RedirectToAction(nameof(Index));
 
         }
 

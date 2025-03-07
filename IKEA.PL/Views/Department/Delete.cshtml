@@ -1,9 +1,10 @@
 ﻿@model DepartmentDetailsToReturnDTO
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Delete";
 }
 
-<h1>Department Details</h1>
+<h1>Delete</h1>
+
 
 <!-- Bootstrap Tabs -->
 <ul class="nav nav-tabs" id="departmentTabs" role="tablist">
@@ -59,9 +60,40 @@
             <input asp-for="LastModificationOn" class="form-control" readonly />
         </div>
     </div>
+    @{
+        var modalId = $"deleteModal_{Model.Id}";
 
-    <div class="mt-4">
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-success me-2">Edit</a> 
-        <a asp-action="Index" class="btn btn-secondary">Back To list</a>
+    }
+    <form >
+        <div class="mt-4">
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#@modalId">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+            <a asp-action="Index" class="btn btn-secondary  ms-2">Cancel</a>
+        </div>
+    
+    </form>
+    <!-- Modal -->
+
+    <div class="modal fade" id="@modalId" tabindex="-1" aria-labelledby="exampleModalLabel_@Model.Id" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel_@Model.Id">Delete Department</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete the department "<strong>@Model.Name</strong>"?
+                </div>
+                <div class="modal-footer">
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
+
+    
 </div>

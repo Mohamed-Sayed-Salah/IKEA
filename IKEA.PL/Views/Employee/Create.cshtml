@@ -1,0 +1,16 @@
+﻿@model EmployeeVM
+@{
+    ViewData["Title"] = "Employees";
+    ViewBag.Action = "Create";
+}
+<div class="row justify-content-center align-items-center flex-column">
+
+    <h1 class="col-6 my-4">Create New Employee</h1>
+    <partial name="Partials/_CreateEditEmployeePartial" />
+
+</div>
+
+@section ValidationScripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}

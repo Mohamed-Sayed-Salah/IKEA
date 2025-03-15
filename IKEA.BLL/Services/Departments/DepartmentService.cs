@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace IKEA.BLL.Services
+namespace IKEA.BLL.Services.Departments
 {
     public class DepartmentService : IDepartmentService
     {
@@ -20,7 +20,7 @@ namespace IKEA.BLL.Services
 
         public IEnumerable<DepartmentToReturnDTO> GetAllDepartments()
         {
-            var departments = _DepartmentRepository.GetAllAsQuarable().Select(department => new DepartmentToReturnDTO
+            var departments = _DepartmentRepository.GetAllAsQuarable().Where(D=>!D.IsDeleted).Select(department => new DepartmentToReturnDTO
             {
                 Id = department.Id,
                 Name = department.Name,

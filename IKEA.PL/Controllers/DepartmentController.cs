@@ -1,5 +1,5 @@
 ﻿using IKEA.BLL.Models.Departments;
-using IKEA.BLL.Services;
+using IKEA.BLL.Services.Departments;
 using IKEA.DAL.Models.Departments;
 using IKEA.PL.Models.Department;
 using Microsoft.AspNetCore.Mvc;
@@ -9,16 +9,21 @@ namespace IKEA.PL.Controllers
 {
     public class DepartmentController : Controller
     {
+
+        #region Services
+
         private readonly IDepartmentService _departmentService;
         private readonly ILogger<CreatedDepartmentDTO> _logger;
         private readonly IWebHostEnvironment _environment;
 
-        public DepartmentController(IDepartmentService departmentService,ILogger<CreatedDepartmentDTO> logger, IWebHostEnvironment environment)
+        public DepartmentController(IDepartmentService departmentService, ILogger<CreatedDepartmentDTO> logger, IWebHostEnvironment environment)
         {
             _departmentService = departmentService;
             _logger = logger;
             _environment = environment;
         }
+
+        #endregion
 
         #region Index
         [HttpGet]
@@ -42,15 +47,24 @@ namespace IKEA.PL.Controllers
 
         #region Post
         [HttpPost]
-        public IActionResult Create(CreatedDepartmentDTO createdDepartment)
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(DepartmentViewModel departmentVM)
         {
             if(!ModelState.IsValid)  // Server Side Validation
             {
-                return View(createdDepartment);
+                return View(departmentVM);
             }
             string message = string.Empty;
+
             try
             {
+                var createdDepartment = new CreatedDepartmentDTO()
+                {
+                    Code = departmentVM.Code,
+                    Name = departmentVM.Name,
+                    Description = departmentVM.Description,
+                    CreationDate = departmentVM.CreationDate
+                };
                 var result = _departmentService.CreateDepartment(createdDepartment);
                 if (result > 0)
                 {
@@ -60,7 +74,7 @@ namespace IKEA.PL.Controllers
                 {
                     message = "Department is not created";
                     ModelState.AddModelError(string.Empty, message);
-                    return View(createdDepartment);
+                    return View(departmentVM);
                 }
             }catch (Exception ex)
             {
@@ -70,7 +84,7 @@ namespace IKEA.PL.Controllers
                 if (_environment.IsDevelopment())
                 {
                     message = ex.Message;
-                    return View(createdDepartment);
+                    return View(departmentVM);
                 }
                 else
                 {
@@ -113,7 +127,7 @@ namespace IKEA.PL.Controllers
             var department = _departmentService.GetDepartmentById(id.Value);
             if (department is null)
                 return NotFound();
-            return View(new DepartmentEditViewModel
+            return View(new DepartmentViewModel
             {
                 Code = department.Code,
                 Name = department.Name,
@@ -126,7 +140,9 @@ namespace IKEA.PL.Controllers
 
         #region Post
         [HttpPost]
-        public IActionResult Edit([FromRoute]int id, [FromBody]DepartmentEditViewModel departmentVM)
+        [ValidateAntiForgeryToken]
+
+        public IActionResult Edit([FromRoute]int id, [FromBody]DepartmentViewModel departmentVM)
         {
             if (!ModelState.IsValid)
             {
@@ -189,6 +205,7 @@ namespace IKEA.PL.Controllers
         #region Post
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
         {
             var massage = string.Empty;

@@ -2,7 +2,7 @@
 
 namespace IKEA.PL.Models.Department
 {
-    public class DepartmentEditViewModel
+    public class DepartmentViewModel
     {
         [Required(ErrorMessage ="Code Is Required !!")]
         public string Code { get; set; } = null!;

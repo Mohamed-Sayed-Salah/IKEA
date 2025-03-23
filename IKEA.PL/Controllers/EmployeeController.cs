@@ -1,251 +1,214 @@
-﻿using IKEA.BLL.Models.Departments;
-using IKEA.BLL.Models.Employees;
-using IKEA.BLL.Services.Departments;
-using IKEA.BLL.Services.Employees;
-using IKEA.DAL.Common.Enums;
-using IKEA.PL.Models.Department;
-using IKEA.PL.Models.Employee;
+﻿using IKEA.BLL.Models;
+using IKEA.BLL.Models.Employee;
+using IKEA.BLL.Services;
+using IKEA.BLL.Services.Employee;
+using IKEA.PL.Models.Departments;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IKEA.PL.Controllers
 {
+    [Authorize]
     public class EmployeeController : Controller
     {
         #region Services
 
         private readonly IEmployeeService _employeeService;
-        private readonly ILogger<CreatedEmployeeDto> _logger;
-        private readonly IWebHostEnvironment _environment;
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly ILogger<EmployeeController> _logger;
+       
 
-        public EmployeeController(IEmployeeService employeeService, ILogger<CreatedEmployeeDto> logger, IWebHostEnvironment environment)
+        public EmployeeController(
+            IEmployeeService employeeService,
+            IWebHostEnvironment webHostEnvironment,
+            ILogger<EmployeeController> logger
+           
+            ) // ASK CLR for Creating Object from EmployeeService Implicitly
         {
-            _employeeService = employeeService;
             _logger = logger;
-            _environment = environment;
+            
+            _webHostEnvironment = webHostEnvironment;
+            _employeeService = employeeService;
         }
 
         #endregion
-
         #region Index
         [HttpGet]
-        public IActionResult Index()
+        //BaseUrl/Employee/Index
+        public  async Task<IActionResult> Index(string search)
         {
-            var employees = _employeeService.GetAllEmployees();
+            var employees = await _employeeService.GetAllEmployeesAsync(search);
             return View(employees);
         }
-
         #endregion
-
         #region Create
-
         #region Get
         [HttpGet]
-        public IActionResult Create()
+        public  async Task<IActionResult> Create([FromServices] IDepartmentService departmentService)
         {
+            ViewData["Departments"] =  await departmentService.GetAllDepartmentsAsync();
             return View();
         }
-
         #endregion
-
         #region Post
         [HttpPost]
         [ValidateAntiForgeryToken]
-
-        public IActionResult Create(EmployeeVM employeeVM)
+        public  async Task<IActionResult> Create(CreatedEmployeeDto employee)
         {
-            if (!ModelState.IsValid)  // Server Side Validation
-            {
-                return View(employeeVM);
-            }
-
-            string message = string.Empty;
+            if (!ModelState.IsValid)
+                return View(employee);
+            var message = string.Empty;
             try
             {
-                var employee = new CreatedEmployeeDto()
-                {
-                    Name = employeeVM.Name,
-                    Address = employeeVM.Address,
-                    Age = employeeVM.Age,
-                    Email = employeeVM.Email,
-                    EmployeeType = employeeVM.EmployeeType,
-                    Gender = employeeVM.Gender,
-                    HiringDate = employeeVM.HiringDate,
-                    IsActive = employeeVM.IsActive,
-                    PhoneNumber = employeeVM.PhoneNumber,
-                    Salary = employeeVM.Salary
-                };
-                var result = _employeeService.CreateEmployee(employee);
+                var result =  await _employeeService.CreateEmployeeAsync(employee);
                 if (result > 0)
                 {
                     return RedirectToAction(nameof(Index));
                 }
                 else
                 {
-                    message = "Employee is not created";
+                    message = "Sorry The Employee Has Not Been Created";
                     ModelState.AddModelError(string.Empty, message);
-                    return View(employeeVM);
+                    return View(employee);
                 }
+
             }
+
             catch (Exception ex)
             {
-                // 1- Log Exeption
+                //1- Log Exception
                 _logger.LogError(ex, ex.Message);
-                // 2- Set Frindly Message
-                if (_environment.IsDevelopment())
+                //2- Set Frindly Message
+                if (_webHostEnvironment.IsDevelopment())
                 {
                     message = ex.Message;
-                    return View(employeeVM);
+                    return View(employee);
                 }
                 else
                 {
-                    message = "Employee is not created";
+                    message = "Sorry The Employee Has Not Been Created";
                     return View("Error", message);
                 }
+
             }
-
         }
-
         #endregion
-
         #endregion
-
         #region Details
         [HttpGet]
-        public IActionResult Details(int id)
-        {
-            var employee = _employeeService.GetEmployeeById(id);
-            if (employee == null)
-                  return NotFound();
-            return View(employee);
-        }
-        #endregion
-
-        #region Edit
-
-        #region Get
-
-        [HttpGet]
-        public IActionResult Edit(int? id)
+        public  async Task<IActionResult> Details(int? id)
         {
             if (id is null)
-                return BadRequest();
-            var employee = _employeeService.GetEmployeeById(id.Value);
-            if (employee is null)
-                return NotFound();
-            return View(new EmployeeVM
             {
-                Id = employee.Id,
-                Name = employee.Name,
-                Age = employee.Age,
-                Salary = employee.Salary,
-                IsActive = employee.IsActive,
-                Address = employee.Address,
-                Email = employee.Email,
-                HiringDate = employee.HiringDate,
-                PhoneNumber = employee.PhoneNumber,
-                EmployeeType = employee.EmployeeType,
-                Gender = employee.Gender
-                
+                return BadRequest();
+            }
+            var employee = await  _employeeService.GetEmployeeByIdAsync(id.Value);
+            if (employee is null)
+            {
+                return NotFound();
+            }
+            return View(employee);
+
+        }
+        #endregion
+        #region  Edit
+        #region Get
+        [HttpGet]
+        public  async Task<IActionResult> Edit(int? id, [FromServices] IDepartmentService departmentService)
+        {
+            if (id is null)
+            {
+                return BadRequest();//400
+
+            }
+            var employee =  await _employeeService.GetEmployeeByIdAsync(id.Value);
+            if (employee is null)
+            {
+                return NotFound();//404
+            }
+            ViewData["Departments"] =  await departmentService.GetAllDepartmentsAsync();
+            return View(new UpdatedEmployeeDto()
+            {
+                Name= employee.Name,
+                Address= employee.Address,
+                Email= employee.Email,
+                Age= employee.Age,
+                Salary= employee.Salary,
+                PhoneNumber= employee.PhoneNumber,
+                IsActive=employee.IsActive,
+                EmployeeType= employee.EmployeeType,
+                Gender= employee.Gender,
+                HiringDate= employee.HiringDate
+
             });
+
+        }
+        #endregion
+        #region Post
+        [HttpPost] // POST
+        [ValidateAntiForgeryToken]
+        public  async Task<IActionResult> Edit([FromRoute] int id, UpdatedEmployeeDto employee)
+        {
+            if (!ModelState.IsValid) // Server-Side Validation
+                return View(employee);
+
+            var message = string.Empty;
+
+            try
+            {
+                var updated = await  _employeeService.UpdateEmployeeAsync(employee) > 0;
+                if (updated)
+                    return RedirectToAction(nameof(Index));
+
+                message = "Employee is not Updated";
+            }
+            catch (Exception ex)
+            {
+                // 1. Log Exception
+                // 2. Set Message
+
+                _logger.LogError(ex, ex.Message);
+
+                if (_webHostEnvironment.IsDevelopment())
+                    message = ex.Message;
+                else
+                    message = "The Employee is not Created";
+            }
+
+            ModelState.AddModelError(string.Empty, message);
+            return View(employee);
+
         }
 
         #endregion
-
+        #endregion
+        #region Delete
         #region Post
         [HttpPost]
         [ValidateAntiForgeryToken]
-
-        public IActionResult Edit([FromRoute] int id, [FromBody] EmployeeVM employeeVM)
+        public  async Task<IActionResult> Delete(int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(employeeVM);
-            }
-
             var message = string.Empty;
             try
             {
-                var updatedEmployee = new UpdatedEmployeeDto()
-                {
-                    Id = id,
-                    Name = employeeVM.Name,
-                    Address = employeeVM.Address,
-                    Age = employeeVM.Age,
-                    Email = employeeVM.Email,
-                    EmployeeType = employeeVM.EmployeeType,
-                    Gender = employeeVM.Gender,
-                    HiringDate = employeeVM.HiringDate,
-                    IsActive = employeeVM.IsActive,
-                    PhoneNumber = employeeVM.PhoneNumber,
-                    Salary = employeeVM.Salary
-                };
-                var updated = _employeeService.UpdateEmployee(updatedEmployee) > 0;
-                if (updated)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
 
-                message = "Sorry, An Error Occured During Updating The Employee";
-                ModelState.AddModelError(string.Empty, message);
-                return View(updatedEmployee);
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                message = _environment.IsDevelopment() ? ex.Message : "Sorry, An Error Occured While Updating The Employee";
-                ModelState.AddModelError(string.Empty, message);
-                return View(employeeVM);
-            }
-
-        }
-
-        #endregion
-
-
-        #endregion
-
-        #region Delete
-
-        #region Get
-        [HttpGet]
-        public IActionResult Delete(int? id)
-        {
-            var employee = _employeeService.GetEmployeeById(id.Value);
-            if (employee == null)
-            {
-                return NotFound();
-            }
-            return View(employee);
-        }
-        #endregion
-
-        #region Post
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-
-        public IActionResult Delete(int id)
-        { 
-            var massage = string.Empty;
-            try
-            {
-                var deleted = _employeeService.DeleteEmployee(id);
+                var deleted =  await _employeeService.DeleteEmployeeAsync(id);
                 if (deleted)
                     return RedirectToAction(nameof(Index));
-
-                massage = "Sorry, An Error Occured During Deleting The Employee";
-
+                message = "An Error Occured  During The Deleting Of Employee";
             }
             catch (Exception ex)
             {
+                //1- Log Exception
                 _logger.LogError(ex, ex.Message);
-                massage = _environment.IsDevelopment() ? ex.Message : "Sorry, An Error Occured During Deleting The EMployee";
-
+                //2- Set Message
+                message = _webHostEnvironment.IsDevelopment() ? ex.Message : "Sorry An Error Occured During Deleting  The Department :(";
             }
             return RedirectToAction(nameof(Index));
+
+
         }
         #endregion
-
         #endregion
     }
 }

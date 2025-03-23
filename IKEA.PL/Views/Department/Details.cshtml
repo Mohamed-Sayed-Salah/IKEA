@@ -1,9 +1,11 @@
-﻿@model DepartmentDetailsToReturnDTO
+﻿@model DepartmentDetailsToReturnDto
 @{
     ViewData["Title"] = "Details";
-    ViewBag.Action = "Details";
+    ViewData["Id"] = Model.Id;
 }
+<h1> Department Details</h1>
+<partial name="Partial/DetailsDeleteDepartmentPartial"/>
 
-<h1>Department Details</h1>
 
-<partial name="Partials/_DetailsDeleteDepartmentPartial" />
+
+
